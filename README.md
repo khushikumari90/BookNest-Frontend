@@ -152,7 +152,7 @@ The UI is fully responsive and works on:
 
 # 👩‍💻 Developed By
 
-Khushi Rawat
+Khushi Kumari
 
 ---
 
