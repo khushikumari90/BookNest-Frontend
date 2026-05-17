@@ -7,6 +7,7 @@ export const routes: Routes = [
   { path: 'auth/login', loadComponent: () => import('./components/auth/login.component').then(m => m.LoginComponent) },
   { path: 'auth/register', loadComponent: () => import('./components/auth/register.component').then(m => m.RegisterComponent) },
   { path: 'auth/register-admin', loadComponent: () => import('./components/auth/register-admin.component').then(m => m.RegisterAdminComponent) },
+  { path: 'auth/forgot-password', loadComponent: () => import('./components/auth/forgot-password.component').then(m => m.ForgotPasswordComponent) },
   { path: 'books', loadComponent: () => import('./components/books/catalog.component').then(m => m.CatalogComponent) },
   { path: 'books/featured', loadComponent: () => import('./components/books/catalog.component').then(m => m.CatalogComponent) },
   { path: 'books/search', loadComponent: () => import('./components/books/catalog.component').then(m => m.CatalogComponent) },

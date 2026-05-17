@@ -12,8 +12,10 @@ export class AuthService {
   constructor(private http: HttpClient) {}
 
   private loadUser(): User | null {
-    const s = localStorage.getItem('booknest_user');
-    return s ? JSON.parse(s) : null;
+    try {
+      const s = localStorage.getItem('booknest_user');
+      return s ? JSON.parse(s) : null;
+    } catch { return null; }
   }
 
   get currentUser(): User | null { return this.userSubject.value; }
@@ -25,11 +27,13 @@ export class AuthService {
     return this.http.post(`${this.AUTH}/login`, req, { responseType: 'text' }).pipe(
       tap(token => {
         localStorage.setItem('booknest_token', token);
+        // Fetch user profile after login
         this.http.get<User>(`${this.AUTH}/profile?email=${req.email}`).subscribe(user => {
           localStorage.setItem('booknest_user', JSON.stringify(user));
           this.userSubject.next(user);
-          // auto-create wallet
-          this.http.post(`/api/wallet/create/${user.userId}`, {}).subscribe({ error: () => {} });
+          // Auto-create wallet (safe — backend ignores if already exists)
+          this.http.post('/api/wallet', { walletId: user.userId, currentBalance: 0 })
+              .subscribe({ error: () => {} });
         });
       })
     );
@@ -39,14 +43,16 @@ export class AuthService {
     return this.http.post<User>(`${this.AUTH}/register`, req);
   }
 
-  registerAdmin(req: RegisterRequest & { adminSecret: string }): Observable<User> {
-    if (req.adminSecret !== 'booknest@admin2026') {
-      throw new Error('Invalid admin secret key.');
-    }
+  registerAdmin(req: RegisterRequest & { adminSecret?: string }): Observable<User> {
     return this.http.post<User>(`${this.AUTH}/register/admin`, req);
   }
 
   logout(): void {
+    const token = this.token;
+    if (token) {
+      this.http.post(`${this.AUTH}/logout?token=${token}`, {})
+               .subscribe({ error: () => {} });
+    }
     localStorage.removeItem('booknest_token');
     localStorage.removeItem('booknest_user');
     this.userSubject.next(null);
@@ -73,14 +79,13 @@ export class AuthService {
     return this.http.delete(`${this.AUTH}/user/${id}`, { responseType: 'text' });
   }
 
-  // Called by OAuthCallbackComponent after GitHub redirect
   setCurrentUser(user: User): void {
     localStorage.setItem('booknest_user', JSON.stringify(user));
     this.userSubject.next(user);
   }
-
-  // Auto-create wallet after OAuth login (safe - ignored if wallet already exists)
   createWallet(userId: number): void {
-    this.http.post(`/api/wallet/create/${userId}`, {}).subscribe({ error: () => {} });
+    this.http.post('/api/wallet', { walletId: userId, currentBalance: 0 })
+      .subscribe({ error: () => {} });
   }
+
 }

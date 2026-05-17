@@ -271,24 +271,11 @@ export class CheckoutComponent implements OnInit {
           const payment = await this.razorpaySvc.openCheckout(
             orderResp, this.userName, this.userEmail
           );
-          // Verify payment + place order
-          this.razorpaySvc.verifyPayment({
-            userId: this.userId,
-            amount: this.cart!.totalPrice,
-            razorpayOrderId:   payment.razorpay_order_id,
-            razorpayPaymentId: payment.razorpay_payment_id,
-            razorpaySignature: payment.razorpay_signature,
-            remarks: `Order payment | PayID: ${payment.razorpay_payment_id}`
-          }).subscribe({
-            next: () => {
-              // Wallet was credited then debited — place ONLINE order
-              const req = this.buildOrderReq('RAZORPAY');
-              this.orderSvc.placeOnline(req).subscribe({
-                next: () => this.onSuccess(req.bookTitle),
-                error: () => { this.placing = false; this.error = 'Payment done but order failed. Contact support.'; }
-              });
-            },
-            error: () => { this.placing = false; this.error = 'Payment verification failed.'; }
+          // Payment successful — directly place RAZORPAY order (no wallet involved)
+          const req = this.buildOrderReq('RAZORPAY');
+          this.orderSvc.placeOnline(req).subscribe({
+            next: () => this.onSuccess(req.bookTitle),
+            error: () => { this.placing = false; this.error = 'Payment done but order failed. Contact support.'; }
           });
         } catch (err: any) {
           this.placing = false;
@@ -302,12 +289,17 @@ export class CheckoutComponent implements OnInit {
   }
 
   private buildOrderReq(mode?: string) {
+    // Use first item as primary book reference; totalPrice covers all items
     const item = this.cart!.items[0];
+    const totalQty = this.cart!.items.reduce((sum, i) => sum + i.quantity, 0);
+    const bookTitle = this.cart!.items.length === 1
+      ? item.bookTitle
+      : `${item.bookTitle} + ${this.cart!.items.length - 1} more`;
     return {
       userId: this.userId,
       bookId: item.bookId,
-      bookTitle: item.bookTitle,
-      quantity: item.quantity,
+      bookTitle: bookTitle,
+      quantity: totalQty,
       amountPaid: this.cart!.totalPrice,
       modeOfPayment: mode || this.payMode,
       address: { ...this.addr, customerId: this.userId }

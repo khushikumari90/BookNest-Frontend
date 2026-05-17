@@ -54,6 +54,7 @@ import { AuthService } from '../../services/auth.service';
         </a>
 
         <div class="auth-footer">
+          <p><a routerLink="/auth/forgot-password" class="forgot-link">Forgot Password?</a></p>
           <p>Don't have an account? <a routerLink="/auth/register">Sign up</a></p>
           <p>Admin? <a routerLink="/auth/register-admin">Register as Admin</a></p>
         </div>
@@ -74,6 +75,7 @@ import { AuthService } from '../../services/auth.service';
     .auth-footer { text-align: center; margin-top: 20px; font-size: 14px; color: var(--text-muted); }
     .auth-footer p { margin-top: 6px; }
     .auth-footer a { color: var(--primary); font-weight: 500; }
+    .forgot-link { color: var(--accent) !important; font-size: 13px; }
     .spinner-sm { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
 
@@ -109,7 +111,9 @@ export class LoginComponent {
       next: () => { this.loading = false; this.router.navigate(['/']); },
       error: e => {
         this.loading = false;
-        this.error = e?.error?.error || e?.error || 'Invalid email or password.';
+        let err = e?.error;
+        if (typeof err === 'string') { try { err = JSON.parse(err); } catch (_) {} }
+        this.error = (typeof err === 'object' ? err?.message || err?.error : err) || 'Invalid email or password.';
       }
     });
   }

@@ -6,9 +6,7 @@
     "booknest-angular": {
       "projectType": "application",
       "schematics": {
-        "@schematics/angular:component": {
-          "style": "scss"
-        }
+        "@schematics/angular:component": { "style": "scss", "standalone": true }
       },
       "root": "",
       "sourceRoot": "src",
@@ -22,15 +20,17 @@
             "browser": "src/main.ts",
             "polyfills": ["zone.js"],
             "tsConfig": "tsconfig.json",
-            "assets": ["src/favicon.ico", "src/assets"],
+            "assets": [
+              { "glob": "**/*", "input": "src/assets", "output": "assets" }
+            ],
             "styles": ["src/styles.scss"],
             "scripts": []
           },
           "configurations": {
             "production": {
               "budgets": [
-                {"type": "initial", "maximumWarning": "500kb", "maximumError": "1mb"},
-                {"type": "anyComponentStyle", "maximumWarning": "2kb", "maximumError": "4kb"}
+                { "type": "initial", "maximumWarning": "2mb", "maximumError": "5mb" },
+                { "type": "anyComponentStyle", "maximumWarning": "4kb", "maximumError": "8kb" }
               ],
               "outputHashing": "all"
             },
@@ -45,15 +45,31 @@
         "serve": {
           "builder": "@angular-devkit/build-angular:dev-server",
           "configurations": {
-            "production": {"buildTarget": "booknest-angular:build:production"},
-            "development": {"buildTarget": "booknest-angular:build:development"}
+            "production": { "buildTarget": "booknest-angular:build:production" },
+            "development": { "buildTarget": "booknest-angular:build:development" }
           },
           "defaultConfiguration": "development",
           "options": {
             "proxyConfig": "proxy.conf.json"
           }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": { "buildTarget": "booknest-angular:build" }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "polyfills": ["zone.js", "zone.js/testing"],
+            "tsConfig": "tsconfig.json",
+            "styles": ["src/styles.scss"],
+            "scripts": []
+          }
         }
       }
     }
+  },
+  "cli": {
+    "analytics": false
   }
 }

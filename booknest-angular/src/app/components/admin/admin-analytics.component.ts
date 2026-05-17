@@ -35,6 +35,11 @@ import { Order, Book } from '../../models/models';
             <div class="kpi-sub">{{walletOrders}} wallet orders</div>
           </div>
           <div class="kpi-card card">
+            <div class="kpi-label">Razorpay Revenue</div>
+            <div class="kpi-value">₹{{razorpayRevenue | number:'1.2-2'}}</div>
+            <div class="kpi-sub">{{razorpayOrders}} online orders</div>
+          </div>
+          <div class="kpi-card card">
             <div class="kpi-label">Avg Order Value</div>
             <div class="kpi-value">₹{{avgOrder | number:'1.2-2'}}</div>
             <div class="kpi-sub">per order</div>
@@ -97,13 +102,21 @@ import { Order, Book } from '../../models/models';
                 <div class="mode-pct">{{totalOrders ? ((walletOrders / totalOrders) * 100 | number:'1.0-0') : 0}}% of orders</div>
               </div>
             </div>
+            <div class="mode-card">
+              <div class="mode-icon razorpay"><i class="fas fa-credit-card"></i></div>
+              <div class="mode-info">
+                <div class="mode-value">{{razorpayOrders}}</div>
+                <div class="mode-label">Razorpay</div>
+                <div class="mode-pct">{{totalOrders ? ((razorpayOrders / totalOrders) * 100 | number:'1.0-0') : 0}}% of orders</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
   `,
   styles: [`
-    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 24px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-bottom: 24px; }
     .kpi-card { padding: 24px; }
     .kpi-label { font-size: 13px; color: var(--text-muted); font-weight: 500; margin-bottom: 8px; }
     .kpi-value { font-size: 1.8rem; font-weight: 700; color: var(--primary); font-family: 'Playfair Display', serif; }
@@ -126,11 +139,12 @@ import { Order, Book } from '../../models/models';
     .book-details { flex: 1; strong { display: block; font-size: 14px; font-family: 'Inter', sans-serif; } span { font-size: 12px; color: var(--text-muted); } }
     .book-orders { font-size: 13px; font-weight: 600; color: var(--primary); }
     .revenue-breakdown { margin-bottom: 24px; }
-    .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    .mode-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
     .mode-card { display: flex; align-items: center; gap: 16px; padding: 20px; background: var(--bg); border-radius: 10px; }
     .mode-icon { width: 48px; height: 48px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
     .cod { background: #c6f6d5; color: #276749; }
     .wallet { background: #bee3f8; color: #2b6cb0; }
+    .razorpay { background: #dbeafe; color: #3395ff; }
     .mode-value { font-size: 1.4rem; font-weight: 700; color: var(--primary); }
     .mode-label { font-size: 14px; font-weight: 500; }
     .mode-pct { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
@@ -141,7 +155,7 @@ import { Order, Book } from '../../models/models';
 export class AdminAnalyticsComponent implements OnInit {
   loading = true;
   totalRevenue = 0; totalOrders = 0; codRevenue = 0; codOrders = 0;
-  walletRevenue = 0; walletOrders = 0; avgOrder = 0;
+  walletRevenue = 0; walletOrders = 0; razorpayRevenue = 0; razorpayOrders = 0; avgOrder = 0;
   statusBreakdown: any[] = [];
   topBooks: any[] = [];
 
@@ -155,8 +169,10 @@ export class AdminAnalyticsComponent implements OnInit {
         this.avgOrder = this.totalOrders ? this.totalRevenue / this.totalOrders : 0;
         const cod = orders.filter(o => o.modeOfPayment === 'COD');
         const wallet = orders.filter(o => o.modeOfPayment === 'WALLET');
+        const razorpay = orders.filter(o => o.modeOfPayment === 'RAZORPAY');
         this.codOrders = cod.length; this.codRevenue = cod.reduce((s, o) => s + o.amountPaid, 0);
         this.walletOrders = wallet.length; this.walletRevenue = wallet.reduce((s, o) => s + o.amountPaid, 0);
+        this.razorpayOrders = razorpay.length; this.razorpayRevenue = razorpay.reduce((s, o) => s + o.amountPaid, 0);
 
         const statusMap: Record<string, number> = {};
         orders.forEach(o => { statusMap[o.orderStatus] = (statusMap[o.orderStatus] || 0) + 1; });
